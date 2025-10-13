@@ -1,4 +1,8 @@
 # Jarkom-Modul-2-2025-K-05
+|No|Nama anggota|NRP|
+|---|---|---|
+|1. | Adiwidya Budi Pratama | 5027241012|
+|2. | Ni'mah Fauziyyah Atok | 5027241103|
 ---
 # Konfigurasi DNS dan Web Server (Soal 4–10)
 
