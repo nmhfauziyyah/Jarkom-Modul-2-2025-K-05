@@ -331,3 +331,397 @@ host 10.66.3.5
 📘 **Selesai.**
 Seluruh konfigurasi DNS dan layanan web (statis & dinamis) untuk domain **K05.com** telah selesai dikonfigurasi dan dapat diuji dari sisi klien.
 
+Of course. Here is a cleaned-up and formatted version of your lab report, suitable for a GitHub repository's `README.md` file.
+
+-----
+
+# Computer Networking Lab Module (Problems 10-16)
+
+This repository contains the scripts and configurations for the computer networking lab, covering dynamic web servers, reverse proxies, security, DNS management, and performance testing.
+
+## 🎈 Soal 10: Dynamic Web Server with PHP (Vingilot)
+
+**Objective:** To configure `Vingilot` as a dynamic web server using Nginx and PHP-FPM, serving a site on `app.K05.com` with a URL rewrite for `/about`.
+
+### Bash Script for Vingilot Setup
+
+This script automates the installation of Nginx and PHP, creates the necessary web files, and configures the Nginx server block.
+
+```bash
+#!/bin/bash
+
+# --- Installation ---
+apt-get update
+apt-get install -y nginx php8.4-fpm
+
+# --- Directory and File Setup ---
+# Create the web root directory
+mkdir -p /var/www/app.K05.com/html
+
+# Create the homepage (index.php)
+cat <<EOF > /var/www/app.K05.com/html/index.php
+<?php
+echo "<h1>Vingilot Sails the Digital World</h1>";
+echo "<p>This is the homepage served by PHP-FPM version 8.4.</p>";
+echo "<p><a href='/about'>Learn more about us.</a></p>";
+?>
+EOF
+
+# Create the 'about' page (about.php)
+cat <<EOF > /var/www/app.K05.com/html/about.php
+<?php
+echo "<h1>About Vingilot</h1>";
+echo "<p>We are the ship that carries dynamic stories across the network.</p>";
+?>
+EOF
+
+# --- Nginx Configuration ---
+cat <<EOF > /etc/nginx/sites-available/app.K05.com
+server {
+    listen 80;
+    server_name app.K05.com;
+
+    root /var/www/app.K05.com/html;
+    index index.php;
+
+    # Rewrite rule: serve /about.php for requests to /about
+    rewrite ^/about$ /about.php last;
+
+    location / {
+        try_files \$uri \$uri/ /index.php?\$query_string;
+    }
+
+    # Pass PHP scripts to the PHP-FPM service
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        # Ensure this path matches the installed PHP version
+        fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
+    }
+}
+EOF
+
+# --- Service Activation and Restart ---
+# Enable the new site configuration
+ln -s /etc/nginx/sites-available/app.K05.com /etc/nginx/sites-enabled/
+rm /etc/nginx/sites-enabled/default
+
+# Test the Nginx configuration for errors
+nginx -t
+
+# Restart services to apply changes
+service nginx restart
+service php8.4-fpm restart
+
+echo "Vingilot setup complete."
+```
+
+### Verification (from a client like Cirdan)
+
+```bash
+# Access the homepage
+curl http://app.K05.com
+
+# Access the about page via its direct filename
+curl http://app.K05.com/about.php
+
+# Access the about page via the clean URL (rewrite)
+curl http://app.K05.com/about
+```
+
+-----
+
+## 🚀 Soal 11: Reverse Proxy with Path-Based Routing (Sirion)
+
+**Objective:** Configure `Sirion` as a reverse proxy that routes requests based on the URL path: `/static/*` goes to the `Lindon` server, and `/app/*` goes to the `Vingilot` server.
+
+### Nginx Configuration for Sirion
+
+```nginx
+# /etc/nginx/sites-available/k05.conf
+
+server {
+    listen 80;
+    server_name www.k05.com sirion.k05.com;
+
+    # Default page served directly by Sirion
+    location / {
+        root /var/www/html;
+        index index.html;
+    }
+
+    # Rule #1: Route static content requests to Lindon
+    location /static/ {
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_pass http://lindon.k05.com/;
+    }
+
+    # Rule #2: Route dynamic app requests to Vingilot
+    location /app/ {
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_pass http://vingilot.k05.com/;
+    }
+}
+```
+
+### Activation and Verification
+
+```bash
+# Enable the site
+ln -s /etc/nginx/sites-available/k05.conf /etc/nginx/sites-enabled/
+rm /etc/nginx/sites-enabled/default
+
+# Test configuration and restart Nginx
+nginx -t
+service nginx restart
+
+# Verify routing from a client
+curl http://www.k05.com/static/annals/
+curl http://www.k05.com/app/
+```
+
+-----
+
+## φ(*￣0￣) Soal 12: Securing a Path with Basic Authentication (Sirion)
+
+**Objective:** Protect the `/admin/` path on `Sirion` with username/password authentication.
+
+### Setup
+
+1.  **Create a password file:**
+
+    ```bash
+    # htpasswd -bc [file_path] [username] [password]
+    htpasswd -bc /etc/nginx/.htpasswd admin admin123
+    ```
+
+2.  **Update Nginx Configuration:**
+    Add a new `location` block for `/admin/` with authentication directives.
+
+    ```nginx
+    # /etc/nginx/sites-available/k05.conf (Updated)
+
+    server {
+        # ... other server settings ...
+
+        # Secure location block for /admin/
+        location ^~ /admin/ {
+            auth_basic "Restricted Admin Area";
+            auth_basic_user_file /etc/nginx/.htpasswd;
+
+            # If authentication succeeds, return a welcome message
+            return 200 "<h1>Welcome, Admin! Access Granted.</h1>\n";
+        }
+
+        # ... other location blocks (/static/, /app/) ...
+    }
+    ```
+
+### Verification
+
+```bash
+# 1. Attempt access without credentials (should fail with 401 Unauthorized)
+curl -i http://www.k05.com/admin/
+
+# 2. Attempt access with correct credentials (should succeed)
+curl --user admin:admin123 http://www.k05.com/admin/
+```
+
+-----
+
+## (*/ω＼*) Soal 13: Canonical Hostname Redirection (Sirion)
+
+**Objective:** Enforce `www.k05.com` as the canonical hostname by redirecting all requests made to Sirion's IP address or `sirion.k05.com`.
+
+### Nginx Configuration Update
+
+Add a new `server` block that catches non-canonical requests and issues a permanent (301) redirect.
+
+```nginx
+# /etc/nginx/sites-available/k05.conf (Updated)
+
+# SERVER BLOCK 1: CATCH & REDIRECT
+# Catches requests to the IP or alternative hostnames.
+server {
+    listen 80 default_server; # Becomes the default for the IP address
+    server_name sirion.k05.com;
+
+    # Permanently redirect to the canonical name, preserving the original URL path.
+    return 301 http://www.k05.com$request_uri;
+}
+
+# SERVER BLOCK 2: CANONICAL HOST
+# Handles requests for the main domain 'www.k05.com'.
+server {
+    listen 80;
+    server_name www.k05.com;
+
+    # ... all previous location blocks (/, /admin/, /static/, /app/) go here ...
+}
+```
+
+### Verification
+
+```bash
+# Test IP address access (should redirect)
+curl -iL http://10.66.3.2/static/annals/
+
+# Test alternative hostname access (should redirect)
+curl -iL http://sirion.k05.com/app/
+
+# Test canonical hostname access (should NOT redirect)
+curl -i http://www.k05.com
+```
+
+-----
+
+## (‾◡◝) Soal 14: Logging Real Client IP on Backend (Vingilot)
+
+**Objective:** Configure `Vingilot`'s access logs to record the original client's IP address passed by the `Sirion` reverse proxy, not Sirion's own IP.
+
+### Setup on Vingilot
+
+1.  **Define a new log format in `/etc/nginx/nginx.conf`:**
+
+    ```nginx
+    http {
+        # ... other http settings ...
+
+        # New log format that uses the X-Real-IP header
+        log_format proxy '$http_x_real_ip - $remote_user [$time_local] '
+                         '"$request" $status $body_bytes_sent '
+                         '"$http_referer" "$http_user_agent"';
+    }
+    ```
+
+2.  **Apply the new format in the site configuration `/etc/nginx/sites-available/app.K05.com`:**
+
+    ```nginx
+    server {
+        # ... server settings ...
+
+        # Use the new 'proxy' log format
+        access_log /var/log/nginx/app.k05.com_access.log proxy;
+
+        # ... rest of the configuration ...
+    }
+    ```
+
+### Verification
+
+1.  From a client (`Earendil`), make a request:
+    ```bash
+    curl http://www.k05.com/app/
+    ```
+2.  On `Vingilot`, check the log file:
+    ```bash
+    tail /var/log/nginx/app.k05.com_access.log
+    ```
+      * **Before:** `10.66.3.2 - - ... "GET / HTTP/1.0" 200 ...` (Logs Sirion's IP)
+      * **After:** `10.66.1.2 - - ... "GET / HTTP/1.0" 200 ...` (Logs Earendil's real IP)
+
+-----
+
+## ♦️ Soal 15: Load Testing with ApacheBench
+
+**Objective:** Use ApacheBench (`ab`) to compare the performance of the static and dynamic endpoints.
+
+### Setup and Execution (on client `Elrond`)
+
+```bash
+# Install Apache utilities
+apt update && apt install -y apache2-utils
+
+# Test the dynamic endpoint (/app/)
+# -n 500: 500 total requests
+# -c 10: 10 concurrent requests
+ab -n 500 -c 10 http://www.k05.com/app/
+
+# Test the static endpoint (/static/)
+ab -n 500 -c 10 http://www.k05.com/static/
+```
+
+### Expected Result Summary
+
+| Endpoint          | Relative Performance | Reason                                                 |
+| ----------------- | -------------------- | ------------------------------------------------------ |
+| **Dynamic (`/app/`)** | Slower               | Requires PHP processing and execution for every request. |
+| **Static (`/static/`)** | Much Faster          | Nginx serves files directly from the disk without overhead. |
+
+The static endpoint is expected to handle significantly more **requests per second**.
+
+-----
+
+## 🩻 Soal 16: DNS Record Change and TTL Propagation
+
+**Objective:** Demonstrate how DNS changes propagate by lowering a record's TTL, changing its IP address, and observing the update from a client's perspective.
+
+### Step 1: Lower TTL and Increment SOA Serial (on `Tirion`)
+
+Edit the zone file `/etc/bind/k05/db.k05.com` to prepare for a quick change.
+
+```dns
+; Lower the default TTL for the experiment
+$TTL    30
+@       IN      SOA     ns1.k05.com. root.k05.com. (
+                        2025101304 ; Serial (Incremented)
+                        ...
+);
+...
+; The record we plan to change
+lindon          IN      A       10.66.3.5
+...
+```
+
+### Step 2: Verification (Moment 1 - Before Change)
+
+From a client (`Earendil`), query the record to cache the initial value.
+
+```bash
+# On Earendil
+dig static.k05.com
+
+# Expected Output: Shows the OLD IP (10.66.3.5) with a TTL near 30.
+```
+
+### Step 3: Execute IP Change (on `Tirion`)
+
+Edit the zone file again, changing the IP address and incrementing the serial number.
+
+```dns
+$TTL    30
+@       IN      SOA     ns1.k05.com. root.k05.com. (
+                        2025101305 ; Serial (Incremented again)
+                        ...
+);
+...
+lindon          IN      A       10.66.3.55 ; <-- NEW IP ADDRESS
+...
+```
+
+Then, restart BIND: `service bind9 restart`.
+
+### Step 4: Verification (Moment 2 - Within TTL Window)
+
+Immediately (within 30 seconds) query from the client again.
+
+```bash
+# On Earendil
+dig static.k05.com
+
+# Expected Output: STILL shows the OLD IP (10.66.3.5) because the client's DNS cache is still valid. The TTL will be lower than 30.
+```
+
+### Step 5: Verification (Moment 3 - After TTL Expires)
+
+Wait for the TTL to expire (e.g., 35 seconds) and query one last time.
+
+```bash
+# On Earendil
+sleep 35 && dig static.k05.com
+
+# Expected Output: Now shows the NEW IP (10.66.3.55). The client's cache expired, forcing a new lookup to the authoritative server.
+```
