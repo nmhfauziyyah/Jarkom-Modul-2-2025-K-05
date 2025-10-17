@@ -328,17 +328,6 @@ host 10.66.3.5
 
 ---
 
-📘 **Selesai.**
-Seluruh konfigurasi DNS dan layanan web (statis & dinamis) untuk domain **K05.com** telah selesai dikonfigurasi dan dapat diuji dari sisi klien.
-
-Of course. Here is a cleaned-up and formatted version of your lab report, suitable for a GitHub repository's `README.md` file.
-
------
-
-# Computer Networking Lab Module (Problems 10-16)
-
-This repository contains the scripts and configurations for the computer networking lab, covering dynamic web servers, reverse proxies, security, DNS management, and performance testing.
-
 ## 🎈 Soal 10: Dynamic Web Server with PHP (Vingilot)
 
 **Objective:** To configure `Vingilot` as a dynamic web server using Nginx and PHP-FPM, serving a site on `app.K05.com` with a URL rewrite for `/about`.
