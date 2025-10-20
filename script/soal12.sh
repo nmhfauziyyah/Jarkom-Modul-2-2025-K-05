@@ -1,29 +1,35 @@
+# Di Sirion
 htpasswd -bc /etc/nginx/.htpasswd admin admin123
 
 nano /etc/nginx/sites-available/k05.conf
->>server {
+>># Di Sirion
+# Tulis ulang file k05.conf dengan isi yang benar
+cat << 'EOF' > /etc/nginx/sites-available/k05.conf
+server {
     listen 80;
     server_name www.k05.com sirion.k05.com;
 
-    # Blok untuk menangani halaman utama, disajikan langsung oleh Sirion
+    # Blok untuk halaman utama
     location / {
         root /var/www/html;
         index index.html;
     }
 
-    # Blok keamanan untuk /admin/
-    # Harus memberikan respons 401 jika tanpa kredensial
+    # Blok Normalisasi: Arahkan /admin -> /admin/
+    location = /admin {
+        return 301 /admin/;
+    }
+
+    # Blok Keamanan: Hanya /admin/ yang diamankan
     location ^~ /admin/ {
         auth_basic "Restricted Admin Area";
         auth_basic_user_file /etc/nginx/.htpasswd;
-
-        # Respons jika autentikasi berhasil
+        
+        # HANYA 'return' setelah auth berhasil.
         return 200 "<h1>Welcome, Admin! Access Granted.</h1>\n";
-        root /var/www/html;
-        index index.html;
     }
 
-    # Blok reverse proxy untuk /static/ ke Lindon
+    # Blok reverse proxy ke Lindon
     location /static/ {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -31,7 +37,7 @@ nano /etc/nginx/sites-available/k05.conf
         proxy_pass http://lindon.k05.com/;
     }
 
-    # Blok reverse proxy untuk /app/ ke Vingilot
+    # Blok reverse proxy ke Vingilot
     location /app/ {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -39,10 +45,17 @@ nano /etc/nginx/sites-available/k05.conf
         proxy_pass http://vingilot.k05.com/;
     }
 }
+EOF
 
-ln -sf /etc/nginx/sites-available/www.conf /etc/nginx/sites-enabled/www.conf
-rm -f /etc/nginx/sites-enabled/default
+# 1. Hapus SEMUA link lama/salah di sites-enabled
+rm -f /etc/nginx/sites-enabled/*
+
+# 2. Buat link baru ke file YANG BENAR (k05.conf)
+ln -s /etc/nginx/sites-available/k05.conf /etc/nginx/sites-enabled/k05.conf
+
+# 3. Uji dan restart
 nginx -t
+# Harusnya 'syntax is ok' dan 'test is successful'
 service nginx restart
 
 curl -i http://www.k05.com/admin/ 
