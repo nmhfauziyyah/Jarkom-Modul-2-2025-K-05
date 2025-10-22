@@ -4,10 +4,10 @@ apt-get update
 apt-get install -y nginx php8.4-fpm
 
 # Buat struktur folder
-mkdir -p /var/www/app.K10.com/html
+mkdir -p /var/www/app.K05.com/html
 
 # Buat file beranda (index.php)
-cat <<EOF > /var/www/app.K10.com/html/index.php
+cat <<EOF > /var/www/app.K05.com/html/index.php
 <?php
 echo "<h1>Vingilot Mengarungi Dunia Digital</h1>";
 echo "<p>Ini adalah beranda yang disajikan oleh PHP-FPM versi 8.4.</p>";
@@ -16,7 +16,7 @@ echo "<p><a href='/about'>Pelajari lebih lanjut tentang kami.</a></p>";
 EOF
 
 # Buat file halaman 'about' (about.php)
-cat <<EOF > /var/www/app.K10.com/html/about.php
+cat <<EOF > /var/www/app.K05.com/html/about.php
 <?php
 echo "<h1>Tentang Vingilot</h1>";
 echo "<p>Kami adalah kapal yang membawa cerita dinamis melintasi jaringan.</p>";
