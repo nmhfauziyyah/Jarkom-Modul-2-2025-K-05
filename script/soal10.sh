@@ -57,7 +57,6 @@ rm /etc/nginx/sites-enabled/default
 # Cek konfigurasi Nginx
 nginx -t
 
-# Jika OK, restart kedua layanan
 service nginx restart
 service php8.4-fpm restart
 
