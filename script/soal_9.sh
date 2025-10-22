@@ -7,7 +7,7 @@
 mkdir -p /var/www/static.K05.com/html/annals
 echo "<h1>Selamat Datang di Pelabuhan Statis Lindon</h1>" > /var/www/static.K05.com/html/index.html
 touch /var/www/static.K05.com/html/annals/catatan_perjalanan.txt
-touch /var/www/static.K10.com/html/annals/peta_beleriand.jpg
+touch /var/www/static.K05.com/html/annals/peta_beleriand.jpg
 
 # Konfigurasi Nginx Server Block
 cat <<EOF > /etc/nginx/sites-available/static.K05.com
