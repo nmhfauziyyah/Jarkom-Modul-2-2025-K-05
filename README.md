@@ -83,6 +83,8 @@ Dokumentasi ini mencakup konfigurasi zona DNS (Master & Slave), reverse DNS, ser
    service bind9 restart
    ```
 
+### Bukti
+![assets/no4.png](assets/no4.png)
 ---
 
 ## 🧾 Soal 5 & 6 — A Records & Verifikasi Sinkronisasi
@@ -120,7 +122,9 @@ Dokumentasi ini mencakup konfigurasi zona DNS (Master & Slave), reverse DNS, ser
    ping lindon.K05.com -c 3
    ping earendil.K05.com -c 3
    ```
-
+### Bukti
+![assets/no5.png](assets/no5.png)
+![assets/no6.png](assets/no6.png)
 ---
 
 ## 🌐 Soal 7 — CNAME Layanan
@@ -148,7 +152,8 @@ ping www.K05.com -c 3
 ping static.K05.com -c 3
 ping app.K05.com -c 3
 ```
-
+### Bukti
+![assets/no7.png](assets/no7.png)
 ---
 
 ## 🔁 Soal 8 — Reverse DNS (PTR)
@@ -211,7 +216,8 @@ service bind9 restart
 host 10.66.3.2
 host 10.66.3.5
 ```
-
+### Bukti
+![assets/no8.png](assets/no8.png)
 ---
 
 ## 🪶 Soal 9 — Web Statis (Lindon)
@@ -261,71 +267,8 @@ host 10.66.3.5
    ```bash
    curl http://static.K05.com/annals/
    ```
-
----
-
-## ⚙️ Soal 10 — Web Dinamis (Vingilot)
-
-### 📍 Di Vingilot (10.66.3.6)
-
-1. Instal Nginx dan PHP-FPM:
-   ```bash
-   apt-get update
-   apt-get install -y nginx php-fpm
-   ```
-
-2. Struktur folder dan file PHP:
-   ```bash
-   mkdir -p /var/www/app.K05.com/html
-   cat <<EOF > /var/www/app.K05.com/html/index.php
-   <?php
-   echo "<h1>Vingilot Mengarungi Dunia Digital</h1>";
-   echo "<p><a href='/about'>Pelajari lebih lanjut.</a></p>";
-   ?>
-   EOF
-
-   cat <<EOF > /var/www/app.K05.com/html/about.php
-   <?php
-   echo "<h1>Tentang Vingilot</h1>";
-   echo "<p>Kapal pembawa cerita dinamis.</p>";
-   ?>
-   EOF
-   ```
-
-3. Konfigurasi Nginx:
-   ```bash
-   cat <<EOF > /etc/nginx/sites-available/app.K05.com
-   server {
-       listen 80;
-       server_name app.K05.com;
-       root /var/www/app.K05.com/html;
-       index index.php;
-       rewrite ^/about$ /about.php last;
-       location / {
-           try_files $uri $uri/ /index.php?$query_string;
-       }
-       location ~ \.php$ {
-           include snippets/fastcgi-php.conf;
-           fastcgi_pass unix:/var/run/php/php-fpm.sock;
-       }
-   }
-   EOF
-   ```
-
-4. Aktifkan dan restart:
-   ```bash
-   ln -s /etc/nginx/sites-available/app.K05.com /etc/nginx/sites-enabled/
-   rm -f /etc/nginx/sites-enabled/default
-   nginx -t
-   service nginx restart
-   service php-fpm restart
-   ```
-
-5. Verifikasi:
-   ```bash
-   curl http://app.K05.com/about
-   ```
-
+### Bukti
+![assets/no9.png](assets/no9.png)
 ---
 
 ## 🎈 Soal 10: Dynamic Web Server with PHP (Vingilot)
